@@ -37,6 +37,12 @@ export default function BillItem({
         [bill.categoryId, categories],
     );
 
+    // 获取父分类
+    const parentCategory = useMemo(() => {
+        if (!category?.parent) return null;
+        return categories.find((c) => c.id === category.parent);
+    }, [category, categories]);
+
     const { id: selfId } = useUserStore();
     const creators = useCreators();
     const creator = creators.find((c) => c.id === bill.creatorId);
@@ -67,7 +73,17 @@ export default function BillItem({
                 <div className="flex flex-col px-4 overflow-hidden">
                     <div className="flex text-md gap-1 h-6">
                         <div className="flex-shrink-0 font-semibold">
-                            {category ? category.name : ""}
+                            {category && (
+                                <>
+                                    {parentCategory ? (
+                                        <>
+                                            {parentCategory.name} <span className="text-xs opacity-60">-</span> {category.name}
+                                        </>
+                                    ) : (
+                                        category.name
+                                    )}
+                                </>
+                            )}
                         </div>
                         <div className="flex flex-wrap gap-x-2 gap-y-1">
                             {tags?.map((tag) => (
