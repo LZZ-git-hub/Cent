@@ -77,7 +77,11 @@ export default function BillItem({
                                 <>
                                     {parentCategory ? (
                                         <>
-                                            {parentCategory.name} <span className="text-xs opacity-60">-</span> {category.name}
+                                            {parentCategory.name}{" "}
+                                            <span className="text-xs opacity-60">
+                                                -
+                                            </span>{" "}
+                                            {category.name}
                                         </>
                                     ) : (
                                         category.name
