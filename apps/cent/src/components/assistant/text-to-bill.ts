@@ -12,9 +12,9 @@ import { usePreferenceStore } from "@/store/preference";
 import { useUserStore } from "@/store/user";
 import { requestAIForVoice } from "./request";
 import {
+    type ParsedBill,
     parseBillsFromResponse,
     parseTaxonomyActions,
-    type ParsedBill,
     type TaxonomyAction,
 } from "./text-to-bill-parser";
 
@@ -283,8 +283,7 @@ async function applyTaxonomyActions(
                 const exists = categories.find(
                     (category) =>
                         category.type === action.type &&
-                        category.name.toLowerCase() ===
-                            name.toLowerCase(),
+                        category.name.toLowerCase() === name.toLowerCase(),
                 );
                 if (!exists && name) {
                     categories.push({
@@ -322,8 +321,7 @@ async function applyTaxonomyActions(
                         (category) =>
                             category.id !== source.id &&
                             category.type === source.type &&
-                            category.name.toLowerCase() ===
-                                name.toLowerCase(),
+                            category.name.toLowerCase() === name.toLowerCase(),
                     )
                 ) {
                     continue;
@@ -390,9 +388,7 @@ async function applyTaxonomyActions(
             if (action.action === "create" && action.name) {
                 const name = action.name.trim();
                 const exists = tags.find(
-                    (tag) =>
-                        tag.name.toLowerCase() ===
-                        name.toLowerCase(),
+                    (tag) => tag.name.toLowerCase() === name.toLowerCase(),
                 );
                 if (!exists && name) {
                     tags.push({ id: v4(), name });
@@ -413,8 +409,7 @@ async function applyTaxonomyActions(
                     tags.some(
                         (tag) =>
                             tag.id !== source.id &&
-                            tag.name.toLowerCase() ===
-                                name.toLowerCase(),
+                            tag.name.toLowerCase() === name.toLowerCase(),
                     )
                 ) {
                     continue;

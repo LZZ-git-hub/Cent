@@ -147,7 +147,9 @@ export default function EditorForm({
     const hasSelectedCategory = categories.some(
         (category) =>
             category.id === billState.categoryId ||
-            category.children.some((child) => child.id === billState.categoryId),
+            category.children.some(
+                (child) => child.id === billState.categoryId,
+            ),
     );
 
     const subCategories = useMemo(() => {
@@ -340,7 +342,8 @@ export default function EditorForm({
                                         categoryId:
                                             (v.type === "expense"
                                                 ? incomes[0]
-                                                : expenses[0])?.id ?? "",
+                                                : expenses[0]
+                                            )?.id ?? "",
                                     }));
                                 }}
                             >
