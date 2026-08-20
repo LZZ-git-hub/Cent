@@ -6,7 +6,6 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useWheelScrollX } from "@/hooks/use-wheel-scroll";
 import PopupLayout from "@/layouts/popup-layout";
 import { amountToNumber, numberToAmount } from "@/ledger/bill";
-import { ExpenseBillCategories, IncomeBillCategories } from "@/ledger/category";
 import type { Bill } from "@/ledger/type";
 import { categoriesGridClassName } from "@/ledger/utils";
 import { useIntl } from "@/locale";
@@ -39,7 +38,7 @@ const defaultBill = {
     type: "expense" as Bill["type"],
     comment: "",
     amount: 0,
-    categoryId: ExpenseBillCategories[0].id,
+    categoryId: "",
 };
 
 export default function EditorForm({
@@ -101,15 +100,19 @@ export default function EditorForm({
         return defaultSub.id;
     };
     const [billState, setBillState] = useState(() => {
+        const initialType = edit?.type ?? defaultBill.type;
+        const initialCategoryId =
+            edit?.categoryId ??
+            (predictCategory?.type === initialType
+                ? predictCategory.id
+                : undefined) ??
+            (initialType === "expense" ? expenses[0]?.id : incomes[0]?.id) ??
+            "";
         const init = {
             ...defaultBill,
             time: Date.now(),
             ...edit,
-            categoryId:
-                predictCategory?.id ??
-                getMatchDefaultCategory(
-                    edit?.categoryId ?? defaultBill.categoryId,
-                ),
+            categoryId: getMatchDefaultCategory(initialCategoryId),
         };
         if (edit?.currency?.target === baseCurrency.id) {
             delete init.currency;
@@ -141,6 +144,11 @@ export default function EditorForm({
     };
 
     const categories = billState.type === "expense" ? expenses : incomes;
+    const hasSelectedCategory = categories.some(
+        (category) =>
+            category.id === billState.categoryId ||
+            category.children.some((child) => child.id === billState.categoryId),
+    );
 
     const subCategories = useMemo(() => {
         const selected = categories.find(
@@ -155,10 +163,11 @@ export default function EditorForm({
     }, [billState.categoryId, categories]);
 
     const toConfirm = useCallback(() => {
+        if (!hasSelectedCategory) return;
         onConfirm?.({
             ...billState,
         });
-    }, [onConfirm, billState]);
+    }, [onConfirm, billState, hasSelectedCategory]);
 
     const chooseImage = async () => {
         const [file] = await showFilePicker({ accept: FORMAT_IMAGE_SUPPORTED });
@@ -329,9 +338,9 @@ export default function EditorForm({
                                                 ? "income"
                                                 : "expense",
                                         categoryId:
-                                            v.type === "expense"
-                                                ? IncomeBillCategories[0].id
-                                                : ExpenseBillCategories[0].id,
+                                            (v.type === "expense"
+                                                ? incomes[0]
+                                                : expenses[0])?.id ?? "",
                                     }));
                                 }}
                             >
@@ -416,6 +425,11 @@ export default function EditorForm({
                                     }}
                                 />
                             ))}
+                            {categories.length === 0 && (
+                                <div className="col-span-full min-h-8 flex items-center justify-center text-xs text-foreground/60">
+                                    {t("please-select-a-category")}
+                                </div>
+                            )}
                             <button
                                 type="button"
                                 className={cn(
@@ -642,7 +656,8 @@ export default function EditorForm({
 
                     <button
                         type="button"
-                        className="flex h-[80px] min-h-[48px] justify-center items-center bg-green-700 rounded-lg font-bold text-lg cursor-pointer"
+                        disabled={!hasSelectedCategory}
+                        className="flex h-[80px] min-h-[48px] justify-center items-center bg-green-700 disabled:bg-stone-600 disabled:cursor-not-allowed rounded-lg font-bold text-lg cursor-pointer"
                         onClick={toConfirm}
                     >
                         <i className="icon-[mdi--check] icon-md"></i>
@@ -650,7 +665,7 @@ export default function EditorForm({
                     <Calculator.Keyboard
                         className={cn("flex-1")}
                         onKey={(v) => {
-                            if (v === "r") {
+                            if (v === "r" && hasSelectedCategory) {
                                 toConfirm();
                                 setTimeout(() => {
                                     goAddBill({

@@ -64,6 +64,23 @@ export default function Page() {
     const showZenOverview = zenOverview.ready;
     const ledgerRef = useRef<any>(null);
 
+    useEffect(() => {
+        const syncWhenActive = () => {
+            if (
+                document.visibilityState === "visible" &&
+                useLedgerStore.getState().sync !== "syncing"
+            ) {
+                void StorageAPI.toSync();
+            }
+        };
+        document.addEventListener("visibilitychange", syncWhenActive);
+        window.addEventListener("online", syncWhenActive);
+        return () => {
+            document.removeEventListener("visibilitychange", syncWhenActive);
+            window.removeEventListener("online", syncWhenActive);
+        };
+    }, []);
+
     const currentDateBills = useMemo(() => {
         const today = filterOrderedBillListByTimeRange(bills, [
             currentDate.startOf("day"),
@@ -248,9 +265,10 @@ export default function Page() {
                 >
                     <button
                         type="button"
-                        className="cursor-pointer flex items-center"
+                        disabled={sync === "syncing"}
+                        className="cursor-pointer disabled:cursor-wait flex items-center"
                         onClick={() => {
-                            StorageAPI.toSync();
+                            void StorageAPI.toSync();
                         }}
                     >
                         {sync === "syncing" ? (

@@ -22,7 +22,7 @@ export class Scheduler {
         this.delay = delay;
     }
 
-    async schedule() {
+    schedule(): Promise<void> {
         if (this.timer) {
             clearTimeout(this.timer);
             this.timer = null;
@@ -39,14 +39,18 @@ export class Scheduler {
         this.generation += 1;
         const myGeneration = this.generation;
 
-        if (!this.sessionPromise) {
-            this.sessionPromise = new Promise<void>((res, rej) => {
+        let session = this.sessionPromise;
+        if (!session) {
+            session = new Promise<void>((res, rej) => {
                 this.sessionResolve = res;
                 this.sessionReject = rej;
             });
+            this.sessionPromise = session;
+            // 自动调度的调用方通常不会 await，内部监听器仍会处理并展示失败状态。
+            void session.catch(() => {});
             for (const l of this.listeners) {
                 try {
-                    l(this.sessionPromise);
+                    l(session);
                 } catch {
                     // ignore listener errors
                 }
@@ -66,6 +70,7 @@ export class Scheduler {
                 this.startCallback(controller, myGeneration);
             }, this.delay);
         }
+        return session;
     }
 
     onProcess(listener: (running: Promise<void>) => void): () => void {

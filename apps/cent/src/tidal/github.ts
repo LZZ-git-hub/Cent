@@ -115,7 +115,10 @@ export const createGithubSyncer = (config: {
     })();
 
     // fetch repo tree -> structure
-    const fetchStructure = async (storeFullName: string) => {
+    const fetchStructure = async (
+        storeFullName: string,
+        signal?: AbortSignal,
+    ) => {
         const octokit = await getOctokit();
 
         const [owner, repo] = storeFullName.split("/");
@@ -124,7 +127,7 @@ export const createGithubSyncer = (config: {
 
         const { data: repoData } = await octokit.request(
             "GET /repos/{owner}/{repo}",
-            { owner, repo, ...withRandomT() },
+            { owner, repo, request: { signal }, ...withRandomT() },
         );
         const { data: refData } = await octokit.request(
             "GET /repos/{owner}/{repo}/git/ref/{ref}",
@@ -132,6 +135,7 @@ export const createGithubSyncer = (config: {
                 owner,
                 repo,
                 ref: `heads/${repoData.default_branch}`,
+                request: { signal },
                 ...withRandomT(),
             },
         );
@@ -139,7 +143,13 @@ export const createGithubSyncer = (config: {
 
         const { data: commitData } = await octokit.request(
             "GET /repos/{owner}/{repo}/git/commits/{commit_sha}",
-            { owner, repo, commit_sha: latestCommitSha, ...withRandomT() },
+            {
+                owner,
+                repo,
+                commit_sha: latestCommitSha,
+                request: { signal },
+                ...withRandomT(),
+            },
         );
         const treeSha = commitData.tree.sha;
 
@@ -150,6 +160,7 @@ export const createGithubSyncer = (config: {
                 repo,
                 tree_sha: treeSha,
                 recursive: "true",
+                request: { signal },
                 ...withRandomT(),
             },
         );
@@ -159,7 +170,11 @@ export const createGithubSyncer = (config: {
     };
 
     // fetch blobs by sha and decode content (base64)
-    const fetchContent = async (storeFullName: string, files: FileLike[]) => {
+    const fetchContent = async (
+        storeFullName: string,
+        files: FileLike[],
+        signal?: AbortSignal,
+    ) => {
         const octokit = await getOctokit();
 
         const [owner, repo] = storeFullName.split("/");
@@ -170,7 +185,13 @@ export const createGithubSyncer = (config: {
             files.map(async (f) => {
                 const { data: content } = await octokit.request(
                     "GET /repos/{owner}/{repo}/git/blobs/{file_sha}",
-                    { owner, repo, file_sha: f.sha, ...withRandomT() },
+                    {
+                        owner,
+                        repo,
+                        file_sha: f.sha,
+                        request: { signal },
+                        ...withRandomT(),
+                    },
                 );
                 return {
                     path: f.path,

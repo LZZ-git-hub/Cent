@@ -105,12 +105,21 @@ export const WebDAVEndpoint: SyncEndpointFactory = {
 
         // ledger 与 zen 顺序同步，保持单一上传通道
         const scheduler = new Scheduler(async (signal) => {
-            const [ledgerFinished, cancelLedger] = repo.sync();
-            signal.onabort = cancelLedger;
-            await ledgerFinished;
-            const [zenFinished, cancelZen] = zenRepo.sync();
-            signal.onabort = cancelZen;
-            await zenFinished;
+            const runSync = async (sync: typeof repo.sync) => {
+                if (signal.aborted) return;
+                const [finished, cancel] = sync();
+                const cancelOnAbort = () => cancel();
+                signal.addEventListener("abort", cancelOnAbort, {
+                    once: true,
+                });
+                try {
+                    await finished;
+                } finally {
+                    signal.removeEventListener("abort", cancelOnAbort);
+                }
+            };
+            await runSync(repo.sync);
+            await runSync(zenRepo.sync);
         });
 
         return {

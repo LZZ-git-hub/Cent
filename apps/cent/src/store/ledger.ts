@@ -135,19 +135,38 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
         set(
             produce((state: LedgerStoreState) => {
                 state.loading = true;
+                state.sync = "syncing";
             }),
         );
         try {
             const currentBookId = useBookStore.getState().currentBookId;
             if (!currentBookId) {
+                set(
+                    produce((state: LedgerStoreState) => {
+                        state.sync = "success";
+                    }),
+                );
                 return;
             }
             await updateBillList(MIN_SIZE);
             await StorageAPI.initBook(currentBookId);
             // 初始化时先加载100条，后续按需加载全部
             await updateBillList(MIN_SIZE);
-            StorageAPI.toSync();
+            if (await StorageAPI.getIsNeedSync()) {
+                await StorageAPI.toSync();
+                await updateBillList(MIN_SIZE);
+            }
+            set(
+                produce((state: LedgerStoreState) => {
+                    state.sync = "success";
+                }),
+            );
         } catch (err) {
+            set(
+                produce((state: LedgerStoreState) => {
+                    state.sync = "failed";
+                }),
+            );
             if ((err as any)?.status === 404) {
                 const { toast } = await toastLib;
                 toast.error(
@@ -225,6 +244,7 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
             console.log("start sync");
             try {
                 await finished;
+                await updateBillList(MIN_SIZE);
                 set(
                     produce((state: LedgerStoreState) => {
                         state.sync = "success";
@@ -279,7 +299,7 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
         const { StorageAPI } = await loadStorageAPI();
         const repo = getCurrentFullRepoName();
         const creatorId = useUserStore.getState().id;
-        StorageAPI.batch(
+        await StorageAPI.batch(
             repo,
             entries.map((v) => {
                 return {
@@ -396,7 +416,7 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
                     value: { ...v, creatorId, id: v4() },
                 } as Update<Bill>;
             });
-            StorageAPI.batch(repo, actions);
+            await StorageAPI.batch(repo, actions);
             // if (overlap) {
             // 	const current = get().bills.filter((v) => v.creatorId === creatorId);
             // 	actions.push(

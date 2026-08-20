@@ -174,6 +174,7 @@ export const createTidal = <Item extends BaseItem>({
                     ),
                 ),
             ),
+            signal,
         );
         const detail = Object.fromEntries(
             Array.from(Object.entries(structure))
@@ -198,10 +199,14 @@ export const createTidal = <Item extends BaseItem>({
     };
 
     // init single store: pull remote structure+content -> patch/init local stash
-    const init = async (storeFullName: string) => {
+    const init = async (storeFullName: string, signal?: AbortSignal) => {
         const { itemBucket } = getStore(storeFullName);
 
-        const { detail, remote, patch } = await fetchStoreDetail(storeFullName);
+        const { detail, remote, patch } = await fetchStoreDetail(
+            storeFullName,
+            undefined,
+            signal,
+        );
         const remoteItems = detail.chunks.flatMap((v) => v.content);
         if (patch) {
             await itemBucket.patch(remoteItems, detail.meta?.content);
@@ -248,6 +253,9 @@ export const createTidal = <Item extends BaseItem>({
         return Promise.all(
             Array.from(storeMap.entries()).map(
                 async ([storeFullName, { itemBucket }]) => {
+                    // 每次同步都先拉取远端，再重新应用本地 stash。
+                    // 这样手动同步和前台自动同步都能拿到其他设备的最新数据。
+                    await init(storeFullName, signal);
                     const stashes = await itemBucket.stashStorage.toArray();
                     if (stashes.length === 0) {
                         return;

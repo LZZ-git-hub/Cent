@@ -56,6 +56,10 @@ export function useQuickEntryByClipboard() {
                 const category =
                     categories.find((c) => c.id === data.category) ??
                     expenses[0];
+                if (!category) {
+                    toast.error(t("please-select-a-category"));
+                    return;
+                }
                 await useLedgerStore.getState().addBill({
                     categoryId: category.id,
                     amount: numberToAmount(data.money),

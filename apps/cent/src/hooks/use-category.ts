@@ -8,25 +8,6 @@ import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 
-/** 确保收入和支持的分类至少有一个 */
-const validateCategories = (categories: BillCategory[]) => {
-    const isValid = categories.reduce(
-        (prev, category) => {
-            if (category.type === "income") {
-                prev.income = true;
-            } else {
-                prev.expense = true;
-            }
-            return prev;
-        },
-        { expense: false, income: false },
-    );
-    if (isValid.income === false || isValid.expense === false) {
-        return false;
-    }
-    return true;
-};
-
 export default function useCategory() {
     const t = useIntl();
     const savedCategories = useLedgerStore(
@@ -56,7 +37,9 @@ export default function useCategory() {
         const { promise, resolve, reject } = Promise.withResolvers<string>();
         await useLedgerStore.getState().updateGlobalMeta((prev) => {
             if (prev.categories === undefined) {
-                prev.categories = BillCategories;
+                prev.categories = BillCategories.map((category) => ({
+                    ...category,
+                }));
             }
             const id = v4();
             prev.categories.push({ ...newData, customName: true, id });
@@ -74,18 +57,14 @@ export default function useCategory() {
             }
             await useLedgerStore.getState().updateGlobalMeta((prev) => {
                 if (prev.categories === undefined) {
-                    prev.categories = BillCategories;
+                    prev.categories = BillCategories.map((category) => ({
+                        ...category,
+                    }));
                 }
                 if (value === undefined) {
                     prev.categories = prev.categories.filter(
                         (v) => v.id !== id,
                     );
-                    const valid = validateCategories(prev.categories);
-                    if (!valid) {
-                        throw new Error(
-                            "each bill-type must has one category as least",
-                        );
-                    }
                     return prev;
                 }
                 const index = prev.categories.findIndex((v) => v.id === id);
@@ -120,7 +99,9 @@ export default function useCategory() {
     const reorder = useCallback(async (ordered: Pick<BillCategory, "id">[]) => {
         await useLedgerStore.getState().updateGlobalMeta((prev) => {
             if (prev.categories === undefined) {
-                prev.categories = BillCategories;
+                prev.categories = BillCategories.map((category) => ({
+                    ...category,
+                }));
             }
             const newCategories = ordered.map((t) =>
                 prev.categories?.find((v) => v.id === t.id),
