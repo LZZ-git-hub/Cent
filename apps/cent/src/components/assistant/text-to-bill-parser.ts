@@ -124,12 +124,12 @@ export function parseTaxonomyActions(result: string): TaxonomyAction[] {
             ) {
                 return [];
             }
-            const categoryType =
-                value.categoryType === "income"
-                    ? "income"
-                    : value.categoryType === "expense"
-                      ? "expense"
-                      : undefined;
+            let categoryType: TaxonomyAction["type"];
+            if (value.categoryType === "income") {
+                categoryType = "income";
+            } else if (value.categoryType === "expense") {
+                categoryType = "expense";
+            }
             return [
                 {
                     kind,
