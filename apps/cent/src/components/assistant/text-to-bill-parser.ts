@@ -124,17 +124,19 @@ export function parseTaxonomyActions(result: string): TaxonomyAction[] {
             ) {
                 return [];
             }
+            const categoryType =
+                value.categoryType === "income"
+                    ? "income"
+                    : value.categoryType === "expense"
+                      ? "expense"
+                      : undefined;
             return [
                 {
                     kind,
                     action: action as TaxonomyAction["action"],
                     id: value.id,
                     targetId: value.targetId,
-                    type:
-                        value.categoryType === "income" ||
-                        value.categoryType === "expense"
-                            ? value.categoryType
-                            : undefined,
+                    type: categoryType,
                     name: value.name,
                     parentId: value.parentId,
                 },
