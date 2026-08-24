@@ -293,7 +293,9 @@ export default function Page() {
                         {sync === "syncing" ? (
                             <CloudLoopIcon width={18} height={18} />
                         ) : (
-                            <i className={cn(syncIconClassName, "size-[18px]")}></i>
+                            <i
+                                className={cn(syncIconClassName, "size-[18px]")}
+                            ></i>
                         )}
                         <span>{syncLabel}</span>
                     </button>
