@@ -60,6 +60,7 @@
   "sync": "sync",
   "not-sync": "not sync",
   "syncing": "syncing",
+  "sync-failed": "sync failed",
   "are-you-sure-to-cancel-syncing": "Are you sure to cancel syncing?",
   "connection-was-canceled": "Connection was canceled",
   "delete-user-success": "Delete user success!",

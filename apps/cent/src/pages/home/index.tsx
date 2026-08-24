@@ -52,12 +52,20 @@ export default function Page() {
     const { id: userId } = useUserStore();
     const syncIconClassName =
         sync === "wait"
-            ? "icon-[mdi--cloud-minus-outline]"
+            ? "icon-[mdi--cloud-upload-outline] text-amber-500"
             : sync === "syncing"
-              ? "icon-[line-md--cloud-alt-print-loop]"
+              ? "icon-[line-md--cloud-alt-print-loop] text-sky-500"
               : sync === "success"
-                ? "icon-[mdi--cloud-check-outline]"
-                : "icon-[mdi--cloud-remove-outline] text-red-600";
+                ? "icon-[mdi--cloud-check-outline] text-emerald-500"
+                : "icon-[mdi--cloud-alert-outline] text-red-600";
+    const syncLabel =
+        sync === "wait"
+            ? t("not-sync")
+            : sync === "syncing"
+              ? t("syncing")
+              : sync === "success"
+                ? t("sync-success")
+                : t("sync-failed");
 
     const [currentDate, setCurrentDate] = useState(dayjs());
     const zenOverview = useZenOverview();
@@ -266,7 +274,18 @@ export default function Page() {
                     <button
                         type="button"
                         disabled={sync === "syncing"}
-                        className="cursor-pointer disabled:cursor-wait flex items-center"
+                        title={t("zen-cloud-sync-tooltip")}
+                        className={cn(
+                            "cursor-pointer disabled:cursor-wait flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors",
+                            sync === "wait" &&
+                                "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                            sync === "syncing" &&
+                                "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+                            sync === "success" &&
+                                "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                            sync === "failed" &&
+                                "bg-red-500/10 text-red-600 dark:text-red-400",
+                        )}
                         onClick={() => {
                             void StorageAPI.toSync();
                         }}
@@ -274,10 +293,9 @@ export default function Page() {
                         {sync === "syncing" ? (
                             <CloudLoopIcon width={18} height={18} />
                         ) : (
-                            <i
-                                className={cn(syncIconClassName, "size-[18px]")}
-                            ></i>
+                            <i className={cn(syncIconClassName, "size-[18px]")}></i>
                         )}
+                        <span>{syncLabel}</span>
                     </button>
                 </HintTooltip>
             </div>

@@ -60,6 +60,7 @@
   "auto-sync": "自动同步",
   "not-sync": "尚未同步",
   "syncing": "同步中",
+  "sync-failed": "同步失败",
   "are-you-sure-to-cancel-syncing": "确定要取消同步吗？",
   "connection-was-canceled": "连接已被取消",
   "delete-user-success": "删除成功！",
